@@ -49,9 +49,11 @@ class ClinVarFetcher(Borg):
 
     _cache_filename = 'clinvarfetcher.db'
 
+    # BG: cachedir default overrides get_cache_path default, and stores cache at ./default/*
     def __init__(self, method='eutils', cachedir='default'):
         """Initialize ClinVarFetcher for clinical variant data retrieval.
         
+        # BG: Only eutils is supported, which other ClinVar APIs can we support?
         Args:
             method (str, optional): Service method to use. Currently only 'eutils'
                 is supported. Defaults to 'eutils'.
@@ -70,8 +72,13 @@ class ClinVarFetcher(Borg):
         self._cache_path = None
 
         if method=='eutils':
+            # BG: ClinVar DB cache
             self._cache_path = get_cache_path(cachedir, self._cache_filename)
+
+            # BG: Eutils wrapper API
             self.qs = get_eutils_client(self._cache_path) 
+
+            # BG: Wrappers for eutils methods
             self.ids_by_gene = self._eutils_ids_by_gene
             self.get_accession = self._eutils_get_accession
             self.pmids_for_id = self._eutils_pmids_for_id
@@ -81,6 +88,8 @@ class ClinVarFetcher(Borg):
         else:
             raise NotImplementedError('coming soon: fetch from local clinvar via medgen-mysql.')
 
+
+    # TODO: BG: For lower conceptual weight, should this explain what an accession ID is / include in method name?
     def _eutils_get_accession(self, accession_id):
         """ returns python dict of info for given ClinVar accession ID.
 
@@ -109,12 +118,14 @@ class ClinVarFetcher(Borg):
         """
         result = self.qs.efetch({'db': 'clinvar', 'id': accession_id, 'rettype': 'vcv'})
         try:
+            # TODO: BG: Should all self.qs (query service) results be wrapped in a helper type like ClinVarVariant
             return ClinVarVariant(result)
         except BaseXMLError as error:
             # empty XML document == invalid variant ID
             print(error)
             raise MetaPubError('Invalid ClinVar Variation ID')
 
+    # TODO: BG: Could we use method cleavage instead of boolean param "single_gene", or OK since not the only param?
     def _eutils_ids_by_gene(self, gene, single_gene=False):
         """
         searches ClinVar for specified gene (HUGO); returns up to 500 matching results.
@@ -126,6 +137,7 @@ class ClinVarFetcher(Borg):
         # equivalent esearch:
         # https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=FGFR3[gene]&retmax=500
 
+        # TODO: BG: Should we support "retmax" for esearch API?
         result = self.qs.esearch(
             {
                 "db": "clinvar",
@@ -134,6 +146,10 @@ class ClinVarFetcher(Borg):
                 "sort": "relevance",
             }
         )
+
+        # TODO: BG: Should this implement exception handling for esearch
+
+        # TODO: BG: Should the parser be in a shared utility?
         dom = etree.fromstring(result)
         ids = []
         idlist = dom.find('IdList')
@@ -149,6 +165,10 @@ class ClinVarFetcher(Borg):
         :param: clinvar_id (integer or string)
         :return: list of pubmed IDs (strings)
         """
+        # TODO: BG: Should we support 'db': 'medgen' as well?
+        # BG: https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/
+
+        # TODO: BG: should we support additional elink params such as "cmd"
         xmlstr = self.qs.elink({'dbfrom': 'clinvar', 'id': clinvar_id, 'db': 'pubmed'})
         return parse_elink_response(xmlstr)
 
@@ -158,9 +178,18 @@ class ClinVarFetcher(Borg):
         :param: hgvs_c (string)
         :return: list of pubmed IDs (strings)
         """
+
+        # TODO: BG: do we need to handle format checking of HGVS string
+
+        # TODO: BG: Should we support retmax and other params supported in esearch?
         result = self.qs.esearch(
             {"db": "clinvar", "term": '"%s"' % hgvs_c, "sort": "relevance"}
         )
+
+        # TODO: BG: Do we need to handle exceptions
+
+
+        # TODO: BG: Can we share parsing through a utility
         dom = etree.fromstring(result)
         ids = []
         idlist = dom.find('IdList')
@@ -174,10 +203,13 @@ class ClinVarFetcher(Borg):
         :param hgvs_text:
         :return: list of pubmed IDs
         """
+
+        # BG: Get ClinVar Ids for HGVS Ids
         ids = self._eutils_ids_for_variant(hgvs_text)
         if len(ids) > 1:
             print('Warning: more than one ClinVar id returned for term %s' % hgvs_text)
         pmids = set()
         for clinvar_id in ids:
+            # BG: Get PubMed Ids for ClinVar Ids
             pmids.update(self._eutils_pmids_for_id(clinvar_id))
         return list(pmids)

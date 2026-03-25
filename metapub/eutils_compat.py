@@ -21,6 +21,7 @@ class EutilsRequestError(Exception):
     pass
 
 
+# BG: Wrapper interface for Eutils (efetch, elink, etc) with request validation
 class QueryService:
     """Drop-in replacement for eutils.QueryService."""
 

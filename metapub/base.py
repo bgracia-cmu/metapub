@@ -4,6 +4,7 @@ from lxml_html_clean.clean import Cleaner
 from .exceptions import MetaPubError, BaseXMLError
 
 
+# TODO: BG: Should this be closer to QueryService / be in a class for parsing / be inside MetaPubObject?
 def parse_elink_response(xmlstr):
     """ return all Ids from an elink XML response
 
