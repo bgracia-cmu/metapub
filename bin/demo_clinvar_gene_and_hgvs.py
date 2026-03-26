@@ -78,4 +78,4 @@ if __name__ == '__main__':
         demo_pmids_for_variant(ids[0])
 
     # 3. HGVS-based lookups
-    demo_hgvs_lookups('NM_000059.4:c.9382C>T')  # BRCA2 variant
+    demo_hgvs_lookups('NM_015559.3:c.2612T>C')  # BRCA2 variant

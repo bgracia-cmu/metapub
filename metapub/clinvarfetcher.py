@@ -80,12 +80,16 @@ class ClinVarFetcher(Borg):
             self.ids_by_gene_and_pdot = self._eutils_ids_by_gene_and_pdot
             self.pmids_for_hgvs = self._eutils_pmids_for_hgvs
             self.variant = self._eutils_get_variant_summary
+            self.variants_by_gene = self._variants_by_gene
+            self.annotate_variants = self._annotate_variants
         else:
             raise NotImplementedError('coming soon: fetch from local clinvar via medgen-mysql.')
 
     @staticmethod
     def _normalize_dot_change(dot_value, prefix):
-        """Normalize c./p. change text into a consistent comparison form."""
+        """Normalize c./p. change text into a consistent comparison form.
+        TODO: this is simplistic and doesn't take into account the depth of comparison researchers need
+        """
         text = (dot_value or '').strip()
         if not text:
             return ''
@@ -94,6 +98,79 @@ class ClinVarFetcher(Borg):
         if not lower.startswith(prefix):
             lower = '%s%s' % (prefix, lower)
         return lower
+
+    """
+    def find_nearby_variants(self, gene, distance=100):
+        Find variants within a given genomic distance (in base pairs) of each other.
+        ids = self._eutils_ids_by_gene(gene)
+        variants = []
+
+        # Collect coordinates
+        for vid in ids:
+            try:
+                v = self._eutils_get_variant_summary(vid)
+
+                if v.loca and coords["pos"]:
+                    variants.append({
+                        "id": vid,
+                        "chrom": coords["chrom"],
+                        "pos": coords["pos"]
+                    })
+            except Exception:
+                continue
+
+        # Sort by position
+        variants.sort(key=lambda x: (x["chrom"], x["pos"]))
+
+        clusters = []
+
+        for i in range(len(variants)):
+            for j in range(i + 1, len(variants)):
+                if variants[i]["chrom"] != variants[j]["chrom"]:
+                    continue
+
+                if abs(variants[i]["pos"] - variants[j]["pos"]) <= distance:
+                    clusters.append((variants[i], variants[j]))
+
+        return clusters
+    """
+
+    def search_variants(self, gene=None, c_dot=None, p_dot=None, clinsig=None, max_results=100):
+        """
+        Allow for searching through variants using gene, HGVS, and/or clinical significance.
+        
+        :param: gene Gene name (if any)
+        :param: c_dot c-dot notation
+        :param: p_dot p-dot notation
+        :param: clinsig additionally filter by clinical significance
+        """
+
+        ids = set()
+        if gene and c_dot:
+            ids.update(self._eutils_ids_by_gene_and_cdot(gene, c_dot))
+        elif gene and p_dot:
+            ids.update(self._eutils_ids_by_gene_and_pdot(gene, p_dot))
+        elif gene:
+            ids.update(self._eutils_ids_by_gene(gene))
+        elif c_dot:
+            ids.update(self._eutils_ids_for_variant(c_dot))
+
+        results = []
+        for vid in list(ids)[:max_results]:
+            try:
+                summary = self._eutils_get_variant_summary(vid, from_esearch=True)
+
+                # Optional clinical significance filtering
+                if clinsig:
+                    cs = summary.clinical_significance
+                    if cs and clinsig.lower() not in str(cs).lower():
+                        continue
+
+                results.append(summary)
+            except Exception:
+                continue
+
+        return results
 
     def _resolve_hgvs_for_gene_and_cdot(self, gene, c_dot):
         """Resolve all matching coding HGVS strings from gene plus c. shorthand input."""
@@ -199,25 +276,73 @@ class ClinVarFetcher(Borg):
             else:
                 raise
 
-    def _eutils_get_variant_summary(self, accession_id):
-        """ returns variant summary XML (<ClinVarResult-Set>) for given ClinVar accession ID.
-        (This corresponds to the entry in the clinvar.variant_summary table.)
+    def _eutils_get_variant_summary(self, accession_id, from_esearch=False):
         """
-        result = self.qs.efetch({'db': 'clinvar', 'id': accession_id, 'rettype': 'vcv'})
+        Return structured, flattened summary for a ClinVar variant given an accession ID.
+
+        :param: accession_id (integer or string)
+        :return: ClinVarVariant
+        :raises: MetaPubError if variation ID is invalid (empty XML document response)
+        """
+        qs_args = {'db': 'clinvar', 'id': accession_id, 'rettype': 'vcv'}
+        if from_esearch:
+            qs_args['from_esearch'] = True
+        result = self.qs.efetch(qs_args)
+
         try:
             return ClinVarVariant(result)
         except BaseXMLError as error:
             # empty XML document == invalid variant ID
-            print(error)
             raise MetaPubError('Invalid ClinVar Variation ID')
 
-    def _eutils_ids_by_gene(self, gene, single_gene=False):
+    def _variants_by_gene(self, gene, single_gene=True, max_results=100):
+        """
+        Searches ClinVar for specified gene (ex. CFTR, in HUGO naming convention),
+        and searches for each variant's information
+
+        :param: gene (string) - gene name in HUGO naming convention.
+        :param: single_gene (bool) [default: False] - restrict results to single-gene accessions.
+        :return: generator of each variant's information
+        """
+        ids = self._eutils_ids_by_gene(gene, single_gene=single_gene, max_results=max_results)
+
+        results = []
+        for vid in ids[:max_results]:
+            try:
+                summary = self._eutils_get_variant_summary(vid)
+                yield summary
+            except Exception:
+                continue
+
+        return results
+
+    def _annotate_variants(self, hgvs_list):
+        """
+        Annotate a list of HGVS c. variants with ClinVar summaries.
+        
+        :param: hgvs_list 
+        """
+        results = {}
+
+        for hgvs in hgvs_list:
+            try:
+                print("inputted hgvs:", hgvs)
+                summary = self.search_variants(c_dot=hgvs)
+                if summary and len(summary) > 0:
+                    results[hgvs] = summary[0].aggregate_clinical_significance()
+
+            except Exception:
+                continue
+
+        return results
+
+    def _eutils_ids_by_gene(self, gene, single_gene=False, max_results=500):
         """
         searches ClinVar for specified gene (HUGO); returns up to 500 matching results.
 
         :param: gene (string) - gene name in HUGO naming convention.
         :param: single_gene (bool) [default: False] - restrict results to single-gene accessions.
-        :return: list of clinvar ids (strings)
+        :return: list of ClinVar accession ids (strings)
         """
         # equivalent esearch:
         # https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=FGFR3[gene]&retmax=500
@@ -228,6 +353,7 @@ class ClinVarFetcher(Borg):
                 "term": gene + "[gene]",
                 "single_gene": single_gene,
                 "sort": "relevance",
+                "retmax": max_results
             }
         )
         dom = etree.fromstring(result)

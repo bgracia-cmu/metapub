@@ -111,6 +111,82 @@ class ClinVarVariant(MetaPubObject):
         outd.pop('content')
         return outd
 
+    ### Allow string visual for debugging
+    def __str__(self):
+        return f"""{self.variation_name}")
+          Type: {self.variation_type}")
+          Gene(s): {[gene['Symbol'] for gene in self.genes]}
+          HGVS_c: {self.hgvs_c}
+          HGVS_g: {self.hgvs_g[:2]}...
+          HGVS_p: {self.hgvs_p}
+          Location: {self.cytogenic_location}
+          Species: {self.species}
+        """
+    
+    def __repr__(self):
+        return f"""{self.variation_name}"""
+
+    def aggregate_clinical_significance(self):
+        """
+        Aggregate clinical significance across all submitters (SCVs).
+
+        TODO: Could add weighting by review status
+
+        :return: dict with counts, consensus, and conflict flag
+        """
+
+        counts = {}
+        total = 0
+
+        # Try structured access first
+        submissions = self.clinical_assertions
+
+        if submissions:
+            for sub in submissions:
+                try:
+                    c = sub.get("classification")
+                    if not c:
+                        continue
+                    cs = c.get("clinical_significance")
+                    if not cs:
+                        continue
+
+                    key = cs.strip().lower().replace(" ", "_")
+                    counts[key] = counts.get(key, 0) + 1
+                    total += 1
+                except Exception:
+                    continue
+
+        else:
+            # Fallback: parse raw XML
+            try:
+                root = self.variation_archive
+                for elem in root.findall(".//ClinicalSignificance/Description"):
+                    cs = elem.text
+                    if not cs:
+                        continue
+
+                    key = cs.strip().lower().replace(" ", "_")
+                    counts[key] = counts.get(key, 0) + 1
+                    total += 1
+            except Exception:
+                pass
+
+        # Determine consensus
+        consensus = None
+        if counts:
+            consensus = max(counts.items(), key=lambda x: x[1])[0]
+
+        conflicting = "conflicting" in (self.clinical_significance or "").lower()
+
+        return {
+            "counts": counts,
+            "total_submissions": total,
+            "consensus": consensus if not conflicting else None,
+            "clinical_significance": self.clinical_significance,
+            "conflicted": conflicting,
+        }
+
     ### HGVS string convenience properties
 
     def _get_hgvs_or_empty_list(self, hgvsdict):
