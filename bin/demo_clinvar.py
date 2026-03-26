@@ -8,6 +8,8 @@ VALID_IDS = [4, 8, 1013, 10000, 12000, 12003, 12004, 12005, 12006, 12007]
 # Use a temporary cache directory to avoid conflicts
 with tempfile.TemporaryDirectory() as tmpdir:
     cvfetch = ClinVarFetcher(cachedir=tmpdir)
+    print("CLUSTERS")
+    print(cvfetch.find_nearby_variants("CFTR"))
 
     # Search directly by gene:
     # for variant in cvfetch.variants_by_gene("CFTR"):

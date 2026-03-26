@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module metapub.clinvarfetcher</title>
+<style>/*
+    CSS file for pydoc.
+
+    Contents of this file are subject to change without notice.
+
+*/
+
+body {
+    background-color: #f0f0f8;
+}
+
+table.heading tr {
+    background-color: #7799ee;
+}
+
+.decor {
+    color: #ffffff;
+}
+
+.title-decor {
+    background-color: #ffc8d8;
+    color: #000000;
+}
+
+.pkg-content-decor {
+    background-color: #aa55cc;
+}
+
+.index-decor {
+    background-color: #ee77aa;
+}
+
+.functions-decor {
+    background-color: #eeaa77;
+}
+
+.data-decor {
+    background-color: #55aa55;
+}
+
+.author-decor {
+    background-color: #7799ee;
+}
+
+.credits-decor {
+    background-color: #7799ee;
+}
+
+.error-decor {
+    background-color: #bb0000;
+}
+
+.grey {
+    color: #909090;
+}
+
+.white {
+    color: #ffffff;
+}
+
+.repr {
+    color: #c040c0;
+}
+
+table.heading tr td.title {
+    vertical-align: bottom;
+}
+
+table.heading tr td.extra {
+    vertical-align: bottom;
+    text-align: right;
+}
+
+.heading-text {
+    font-family: helvetica, arial;
+}
+
+.bigsection {
+    font-size: larger;
+}
+
+.title {
+    font-size: x-large;
+}
+
+.code {
+    font-family: monospace;
+}
+
+table {
+    width: 100%;
+    border-spacing : 0;
+    border-collapse : collapse;
+    border: 0;
+}
+
+td {
+    padding: 2;
+}
+
+td.section-title {
+    vertical-align: bottom;
+}
+
+td.multicolumn {
+    width: 25%;
+    vertical-align: bottom;
+}
+
+td.singlecolumn {
+    width: 100%;
+}
+</style></head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="metapub.html" class="white">metapub</a>.clinvarfetcher</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/home/sarah/dev/projects/team1-s26/metapub/metapub/clinvarfetcher.py">/home/sarah/dev/projects/team1-s26/metapub/metapub/clinvarfetcher.py</a></td></tr></table>
+    <p><span class="code">metapub.clinvarfetcher:&nbsp;tools&nbsp;for&nbsp;interacting&nbsp;with&nbsp;ClinVar&nbsp;data</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="lxml.etree.html">lxml.etree</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+    
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="metapub.base.html#Borg">metapub.base.Borg</a>(<a href="builtins.html#object">builtins.object</a>)
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="metapub.clinvarfetcher.html#ClinVarFetcher">ClinVarFetcher</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="ClinVarFetcher">class <strong>ClinVarFetcher</strong></a>(<a href="metapub.base.html#Borg">metapub.base.Borg</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#ClinVarFetcher">ClinVarFetcher</a>(method='eutils',&nbsp;cachedir='default')<br>
+&nbsp;<br>
+<a href="#ClinVarFetcher">ClinVarFetcher</a>&nbsp;(a&nbsp;<a href="metapub.base.html#Borg">Borg</a>&nbsp;singleton&nbsp;object)<br>
+&nbsp;<br>
+Toolkit&nbsp;for&nbsp;retrieval&nbsp;of&nbsp;ClinVar&nbsp;information.&nbsp;<br>
+&nbsp;<br>
+Set&nbsp;optional&nbsp;'cachedir'&nbsp;parameter&nbsp;to&nbsp;absolute&nbsp;path&nbsp;of&nbsp;preferred&nbsp;directory&nbsp;<br>
+if&nbsp;desired;&nbsp;cachedir&nbsp;defaults&nbsp;to&nbsp;&lt;current&nbsp;user&nbsp;directory&gt;&nbsp;+&nbsp;/.cache<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;clinvar&nbsp;=&nbsp;<a href="#ClinVarFetcher">ClinVarFetcher</a>()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;clinvar&nbsp;=&nbsp;<a href="#ClinVarFetcher">ClinVarFetcher</a>(cachedir='/path/to/cachedir')<br>
+&nbsp;<br>
+Usage<br>
+-----<br>
+&nbsp;<br>
+Get&nbsp;ClinVar&nbsp;accession&nbsp;IDs&nbsp;for&nbsp;gene&nbsp;name&nbsp;(switch&nbsp;single_gene&nbsp;to&nbsp;True&nbsp;to&nbsp;filter&nbsp;out&nbsp;<br>
+results&nbsp;containing&nbsp;more&nbsp;genes&nbsp;than&nbsp;the&nbsp;specified&nbsp;gene&nbsp;being&nbsp;searched,&nbsp;default&nbsp;False).<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cv_ids&nbsp;=&nbsp;clinvar.<a href="#ClinVarFetcher-ids_by_gene">ids_by_gene</a>('FGFR3',&nbsp;single_gene=True)<br>
+&nbsp;<br>
+Get&nbsp;ClinVar&nbsp;accession&nbsp;in&nbsp;python&nbsp;dictionary&nbsp;format&nbsp;for&nbsp;given&nbsp;ID:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cv_subm&nbsp;=&nbsp;clinvar.accession(65533)&nbsp;&nbsp;#&nbsp;can&nbsp;also&nbsp;submit&nbsp;ID&nbsp;as&nbsp;string&nbsp;<br>
+&nbsp;<br>
+Get&nbsp;list&nbsp;of&nbsp;pubmed&nbsp;IDs&nbsp;(pmids)&nbsp;for&nbsp;given&nbsp;ClinVar&nbsp;accession&nbsp;ID:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pmids&nbsp;=&nbsp;clinvar.<a href="#ClinVarFetcher-pmids_for_id">pmids_for_id</a>(65533)&nbsp;&nbsp;#&nbsp;can&nbsp;also&nbsp;submit&nbsp;ID&nbsp;as&nbsp;string<br>
+&nbsp;<br>
+Get&nbsp;list&nbsp;of&nbsp;pubmed&nbsp;IDs&nbsp;(pmids)&nbsp;for&nbsp;hgvs&nbsp;string:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pmids&nbsp;=&nbsp;clinvar.<a href="#ClinVarFetcher-pmids_for_hgvs">pmids_for_hgvs</a>('NM_017547.3:c.1289A&gt;G')<br>
+&nbsp;<br>
+For&nbsp;more&nbsp;info,&nbsp;see&nbsp;the&nbsp;ClinVar&nbsp;eutils&nbsp;page:<br>
+<a href="https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/">https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/</a><br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="metapub.clinvarfetcher.html#ClinVarFetcher">ClinVarFetcher</a></dd>
+<dd><a href="metapub.base.html#Borg">metapub.base.Borg</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="ClinVarFetcher-__init__"><strong>__init__</strong></a>(self, method='eutils', cachedir='default')</dt><dd><span class="code">Initialize&nbsp;<a href="#ClinVarFetcher">ClinVarFetcher</a>&nbsp;for&nbsp;clinical&nbsp;variant&nbsp;data&nbsp;retrieval.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;method&nbsp;(str,&nbsp;optional):&nbsp;Service&nbsp;method&nbsp;to&nbsp;use.&nbsp;Currently&nbsp;only&nbsp;'eutils'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;supported.&nbsp;Defaults&nbsp;to&nbsp;'eutils'.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cachedir&nbsp;(str,&nbsp;optional):&nbsp;Directory&nbsp;for&nbsp;caching&nbsp;responses.&nbsp;Use&nbsp;'default'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;system&nbsp;cache&nbsp;directory.&nbsp;Defaults&nbsp;to&nbsp;'default'.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;NotImplementedError:&nbsp;If&nbsp;an&nbsp;unsupported&nbsp;method&nbsp;is&nbsp;specified.<br>
+&nbsp;<br>
+Note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;is&nbsp;a&nbsp;<a href="metapub.base.html#Borg">Borg</a>&nbsp;singleton&nbsp;-&nbsp;all&nbsp;instances&nbsp;share&nbsp;the&nbsp;same&nbsp;state.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Provides&nbsp;access&nbsp;to&nbsp;NCBI's&nbsp;ClinVar&nbsp;database&nbsp;for&nbsp;clinical&nbsp;significance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;genetic&nbsp;variants,&nbsp;gene-disease&nbsp;relationships,&nbsp;and&nbsp;variant&nbsp;literature.</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-find_nearby_variants"><strong>find_nearby_variants</strong></a>(self, gene, distance=1000)</dt><dd><span class="code">Find&nbsp;variants&nbsp;within&nbsp;a&nbsp;given&nbsp;genomic&nbsp;distance&nbsp;(in&nbsp;base&nbsp;pairs)&nbsp;of&nbsp;each&nbsp;other&nbsp;<br>
+within&nbsp;a&nbsp;gene.</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-get_accession"><strong>get_accession</strong></a>(self, accession_id)</dt><dd><span class="code">returns&nbsp;python&nbsp;dict&nbsp;of&nbsp;info&nbsp;for&nbsp;given&nbsp;ClinVar&nbsp;accession&nbsp;ID.<br>
+&nbsp;<br>
+:param:&nbsp;accession_id&nbsp;(integer&nbsp;or&nbsp;string)<br>
+:return:&nbsp;dictionary<br>
+:raises:&nbsp;NCBIServiceError&nbsp;if&nbsp;ClinVar&nbsp;service&nbsp;is&nbsp;down</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-get_variant_summary"><strong>get_variant_summary</strong></a>(self, accession_id, from_esearch=False)</dt><dd><span class="code">Return&nbsp;structured,&nbsp;flattened&nbsp;summary&nbsp;for&nbsp;a&nbsp;ClinVar&nbsp;variant&nbsp;given&nbsp;an&nbsp;accession&nbsp;ID.<br>
+&nbsp;<br>
+:param:&nbsp;accession_id&nbsp;(integer&nbsp;or&nbsp;string)<br>
+:return:&nbsp;ClinVarVariant<br>
+:raises:&nbsp;MetaPubError&nbsp;if&nbsp;variation&nbsp;ID&nbsp;is&nbsp;invalid&nbsp;(empty&nbsp;XML&nbsp;document&nbsp;response)</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-ids_by_gene"><strong>ids_by_gene</strong></a>(self, gene, single_gene=False, max_results=500)</dt><dd><span class="code">searches&nbsp;ClinVar&nbsp;for&nbsp;specified&nbsp;gene&nbsp;(HUGO);&nbsp;returns&nbsp;up&nbsp;to&nbsp;500&nbsp;matching&nbsp;results.<br>
+&nbsp;<br>
+:param:&nbsp;gene&nbsp;(string)&nbsp;-&nbsp;gene&nbsp;name&nbsp;in&nbsp;HUGO&nbsp;naming&nbsp;convention.<br>
+:param:&nbsp;single_gene&nbsp;(bool)&nbsp;[default:&nbsp;False]&nbsp;-&nbsp;restrict&nbsp;results&nbsp;to&nbsp;single-gene&nbsp;accessions.<br>
+:return:&nbsp;list&nbsp;of&nbsp;ClinVar&nbsp;accession&nbsp;ids&nbsp;(strings)</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-ids_by_gene_and_cdot"><strong>ids_by_gene_and_cdot</strong></a>(self, gene, c_dot)</dt><dd><span class="code">Return&nbsp;ClinVar&nbsp;IDs&nbsp;from&nbsp;gene&nbsp;+&nbsp;c.&nbsp;notation&nbsp;using&nbsp;HGVS&nbsp;resolution.</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-ids_by_gene_and_pdot"><strong>ids_by_gene_and_pdot</strong></a>(self, gene, p_dot)</dt><dd><span class="code">Return&nbsp;ClinVar&nbsp;IDs&nbsp;from&nbsp;gene&nbsp;+&nbsp;p.&nbsp;notation&nbsp;using&nbsp;HGVS&nbsp;resolution.</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-ids_for_variant"><strong>ids_for_variant</strong></a>(self, hgvs_c)</dt><dd><span class="code">returns&nbsp;ClinVar&nbsp;IDs&nbsp;for&nbsp;given&nbsp;HGVS&nbsp;c.&nbsp;string<br>
+&nbsp;<br>
+:param:&nbsp;hgvs_c&nbsp;(string)<br>
+:return:&nbsp;list&nbsp;of&nbsp;pubmed&nbsp;IDs&nbsp;(strings)</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-pmids_for_hgvs"><strong>pmids_for_hgvs</strong></a>(self, hgvs_text)</dt><dd><span class="code">returns&nbsp;pubmed&nbsp;IDs&nbsp;for&nbsp;given&nbsp;HGVS&nbsp;c.&nbsp;string<br>
+&nbsp;<br>
+:param&nbsp;hgvs_text:<br>
+:return:&nbsp;list&nbsp;of&nbsp;pubmed&nbsp;IDs</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-pmids_for_id"><strong>pmids_for_id</strong></a>(self, clinvar_id)</dt><dd><span class="code">example:<br>
+<a href="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=clinvar&amp;db=pubmed&amp;id=9">https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=clinvar&amp;db=pubmed&amp;id=9</a><br>
+&nbsp;<br>
+:param:&nbsp;clinvar_id&nbsp;(integer&nbsp;or&nbsp;string)<br>
+:return:&nbsp;list&nbsp;of&nbsp;pubmed&nbsp;IDs&nbsp;(strings)</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-search_variants"><strong>search_variants</strong></a>(self, gene=None, c_dot=None, p_dot=None, clinsig=None, max_results=100)</dt><dd><span class="code">Allow&nbsp;for&nbsp;searching&nbsp;through&nbsp;variants&nbsp;using&nbsp;gene,&nbsp;HGVS,&nbsp;and/or&nbsp;clinical&nbsp;significance.<br>
+&nbsp;<br>
+:param:&nbsp;gene&nbsp;Gene&nbsp;name&nbsp;(if&nbsp;any)<br>
+:param:&nbsp;c_dot&nbsp;c-dot&nbsp;notation<br>
+:param:&nbsp;p_dot&nbsp;p-dot&nbsp;notation<br>
+:param:&nbsp;clinsig&nbsp;additionally&nbsp;filter&nbsp;by&nbsp;clinical&nbsp;significance</span></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="metapub.base.html#Borg">metapub.base.Borg</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

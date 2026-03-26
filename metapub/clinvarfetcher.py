@@ -6,7 +6,6 @@ from lxml import etree
 
 from .clinvarvariant import ClinVarVariant
 from .exceptions import MetaPubError, BaseXMLError
-from .eutils_common import get_eutils_client
 from .cache_utils import get_cache_path 
 from .base import Borg, parse_elink_response
 from .ncbi_errors import diagnose_ncbi_error, NCBIServiceError
@@ -71,15 +70,15 @@ class ClinVarFetcher(Borg):
 
         if method=='eutils':
             self._cache_path = get_cache_path(cachedir, self._cache_filename)
-            self.qs = get_eutils_client(self._cache_path) 
-            self.ids_by_gene = self._eutils_ids_by_gene
-            self.get_accession = self._eutils_get_accession
-            self.pmids_for_id = self._eutils_pmids_for_id
-            self.ids_for_variant = self._eutils_ids_for_variant
-            self.ids_by_gene_and_cdot = self._eutils_ids_by_gene_and_cdot
-            self.ids_by_gene_and_pdot = self._eutils_ids_by_gene_and_pdot
-            self.pmids_for_hgvs = self._eutils_pmids_for_hgvs
-            self.variant = self._eutils_get_variant_summary
+            self.qs = getclient(self._cache_path) 
+            self.ids_by_gene = self.ids_by_gene
+            self.get_accession = self.get_accession
+            self.pmids_for_id = self.pmids_for_id
+            self.ids_for_variant = self.ids_for_variant
+            self.ids_by_gene_and_cdot = self.ids_by_gene_and_cdot
+            self.ids_by_gene_and_pdot = self.ids_by_gene_and_pdot
+            self.pmids_for_hgvs = self.pmids_for_hgvs
+            self.variant = self.get_variant_summary
             self.variants_by_gene = self._variants_by_gene
             self.annotate_variants = self._annotate_variants
         else:
@@ -99,23 +98,27 @@ class ClinVarFetcher(Borg):
             lower = '%s%s' % (prefix, lower)
         return lower
 
-    """
-    def find_nearby_variants(self, gene, distance=100):
-        Find variants within a given genomic distance (in base pairs) of each other.
-        ids = self._eutils_ids_by_gene(gene)
+    def find_nearby_variants(self, gene, distance=1000):
+        """
+        Find variants within a given genomic distance (in base pairs) of each other 
+        within a gene.
+        """
+        ids = self.ids_by_gene(gene, max_results=100)
         variants = []
 
         # Collect coordinates
         for vid in ids:
             try:
-                v = self._eutils_get_variant_summary(vid)
+                v = self.get_variant_summary(vid).sequence_locations
 
-                if v.loca and coords["pos"]:
-                    variants.append({
-                        "id": vid,
-                        "chrom": coords["chrom"],
-                        "pos": coords["pos"]
-                    })
+                for location in v:
+                    if location["Chr"] and location["start"] and location["stop"] and location["Assembly"] == "GRCh38":
+                        variants.append({
+                            "id": vid,
+                            "chrom": int(location["Chr"]),
+                            "pos": int(location["start"])
+                        })
+
             except Exception:
                 continue
 
@@ -129,11 +132,11 @@ class ClinVarFetcher(Borg):
                 if variants[i]["chrom"] != variants[j]["chrom"]:
                     continue
 
+                print("DIFF", abs(variants[i]["pos"] - variants[j]["pos"]))
                 if abs(variants[i]["pos"] - variants[j]["pos"]) <= distance:
                     clusters.append((variants[i], variants[j]))
 
         return clusters
-    """
 
     def search_variants(self, gene=None, c_dot=None, p_dot=None, clinsig=None, max_results=100):
         """
@@ -147,18 +150,18 @@ class ClinVarFetcher(Borg):
 
         ids = set()
         if gene and c_dot:
-            ids.update(self._eutils_ids_by_gene_and_cdot(gene, c_dot))
+            ids.update(self.ids_by_gene_and_cdot(gene, c_dot))
         elif gene and p_dot:
-            ids.update(self._eutils_ids_by_gene_and_pdot(gene, p_dot))
+            ids.update(self.ids_by_gene_and_pdot(gene, p_dot))
         elif gene:
-            ids.update(self._eutils_ids_by_gene(gene))
+            ids.update(self.ids_by_gene(gene))
         elif c_dot:
-            ids.update(self._eutils_ids_for_variant(c_dot))
+            ids.update(self.ids_for_variant(c_dot))
 
         results = []
         for vid in list(ids)[:max_results]:
             try:
-                summary = self._eutils_get_variant_summary(vid, from_esearch=True)
+                summary = self.get_variant_summary(vid, from_esearch=True)
 
                 # Optional clinical significance filtering
                 if clinsig:
@@ -183,14 +186,14 @@ class ClinVarFetcher(Borg):
         if not normalized_dot:
             raise MetaPubError('%s change text is required.' % prefix)
 
-        candidate_ids = self._eutils_ids_by_gene(gene, single_gene=True)
+        candidate_ids = self.ids_by_gene(gene, single_gene=True)
         if not candidate_ids:
-            candidate_ids = self._eutils_ids_by_gene(gene, single_gene=False)
+            candidate_ids = self.ids_by_gene(gene, single_gene=False)
 
         matches = []
         for clinvar_id in candidate_ids:
             try:
-                variant = self._eutils_get_variant_summary(clinvar_id)
+                variant = self.get_variant_summary(clinvar_id)
             except Exception:
                 continue
 
@@ -224,14 +227,14 @@ class ClinVarFetcher(Borg):
         if not normalized_dot:
             raise MetaPubError('%s change text is required.' % prefix)
 
-        candidate_ids = self._eutils_ids_by_gene(gene, single_gene=True)
+        candidate_ids = self.ids_by_gene(gene, single_gene=True)
         if not candidate_ids:
-            candidate_ids = self._eutils_ids_by_gene(gene, single_gene=False)
+            candidate_ids = self.ids_by_gene(gene, single_gene=False)
 
         matches = []
         for clinvar_id in candidate_ids:
             try:
-                variant = self._eutils_get_variant_summary(clinvar_id)
+                variant = self.get_variant_summary(clinvar_id)
             except Exception:
                 continue
 
@@ -254,7 +257,7 @@ class ClinVarFetcher(Borg):
             )
         return list(dict.fromkeys(matches))
 
-    def _eutils_get_accession(self, accession_id):
+    def get_accession(self, accession_id):
         """ returns python dict of info for given ClinVar accession ID.
 
         :param: accession_id (integer or string)
@@ -276,7 +279,7 @@ class ClinVarFetcher(Borg):
             else:
                 raise
 
-    def _eutils_get_variant_summary(self, accession_id, from_esearch=False):
+    def get_variant_summary(self, accession_id, from_esearch=False):
         """
         Return structured, flattened summary for a ClinVar variant given an accession ID.
 
@@ -304,12 +307,12 @@ class ClinVarFetcher(Borg):
         :param: single_gene (bool) [default: False] - restrict results to single-gene accessions.
         :return: generator of each variant's information
         """
-        ids = self._eutils_ids_by_gene(gene, single_gene=single_gene, max_results=max_results)
+        ids = self.ids_by_gene(gene, single_gene=single_gene, max_results=max_results)
 
         results = []
         for vid in ids[:max_results]:
             try:
-                summary = self._eutils_get_variant_summary(vid)
+                summary = self.get_variant_summary(vid)
                 yield summary
             except Exception:
                 continue
@@ -336,7 +339,7 @@ class ClinVarFetcher(Borg):
 
         return results
 
-    def _eutils_ids_by_gene(self, gene, single_gene=False, max_results=500):
+    def ids_by_gene(self, gene, single_gene=False, max_results=500):
         """
         searches ClinVar for specified gene (HUGO); returns up to 500 matching results.
 
@@ -363,7 +366,7 @@ class ClinVarFetcher(Borg):
             ids.append(item.text.strip())
         return ids
 
-    def _eutils_pmids_for_id(self, clinvar_id):
+    def pmids_for_id(self, clinvar_id):
         """
         example:
         https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=clinvar&db=pubmed&id=9
@@ -374,7 +377,7 @@ class ClinVarFetcher(Borg):
         xmlstr = self.qs.elink({'dbfrom': 'clinvar', 'id': clinvar_id, 'db': 'pubmed'})
         return parse_elink_response(xmlstr)
 
-    def _eutils_ids_for_variant(self, hgvs_c):
+    def ids_for_variant(self, hgvs_c):
         """ returns ClinVar IDs for given HGVS c. string
 
         :param: hgvs_c (string)
@@ -390,34 +393,34 @@ class ClinVarFetcher(Borg):
             ids.append(item.text.strip())
         return ids
 
-    def _eutils_ids_by_gene_and_cdot(self, gene, c_dot):
+    def ids_by_gene_and_cdot(self, gene, c_dot):
         """Return ClinVar IDs from gene + c. notation using HGVS resolution."""
         normalized_cdot = self._normalize_dot_change(c_dot, 'c.')
         hgvs_c_list = self._resolve_hgvs_for_gene_and_cdot(gene, normalized_cdot)
         ids = []
         for hgvs_c in hgvs_c_list:
-            ids.extend(self._eutils_ids_for_variant(hgvs_c))
+            ids.extend(self.ids_for_variant(hgvs_c))
         return list(dict.fromkeys(ids))
 
-    def _eutils_ids_by_gene_and_pdot(self, gene, p_dot):
+    def ids_by_gene_and_pdot(self, gene, p_dot):
         """Return ClinVar IDs from gene + p. notation using HGVS resolution."""
         normalized_pdot = self._normalize_dot_change(p_dot, 'p.')
         hgvs_p_list = self._resolve_hgvs_for_gene_and_pdot(gene, normalized_pdot)
         ids = []
         for hgvs_p in hgvs_p_list:
-            ids.extend(self._eutils_ids_for_variant(hgvs_p))
+            ids.extend(self.ids_for_variant(hgvs_p))
         return list(dict.fromkeys(ids))
 
-    def _eutils_pmids_for_hgvs(self, hgvs_text):
+    def pmids_for_hgvs(self, hgvs_text):
         """ returns pubmed IDs for given HGVS c. string
 
         :param hgvs_text:
         :return: list of pubmed IDs
         """
-        ids = self._eutils_ids_for_variant(hgvs_text)
+        ids = self.ids_for_variant(hgvs_text)
         if len(ids) > 1:
             print('Warning: more than one ClinVar id returned for term %s' % hgvs_text)
         pmids = set()
         for clinvar_id in ids:
-            pmids.update(self._eutils_pmids_for_id(clinvar_id))
+            pmids.update(self.pmids_for_id(clinvar_id))
         return list(pmids)
