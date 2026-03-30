@@ -70,17 +70,8 @@ class ClinVarFetcher(Borg):
 
         if method=='eutils':
             self._cache_path = get_cache_path(cachedir, self._cache_filename)
-            self.qs = getclient(self._cache_path) 
-            self.ids_by_gene = self.ids_by_gene
-            self.get_accession = self.get_accession
-            self.pmids_for_id = self.pmids_for_id
-            self.ids_for_variant = self.ids_for_variant
-            self.ids_by_gene_and_cdot = self.ids_by_gene_and_cdot
-            self.ids_by_gene_and_pdot = self.ids_by_gene_and_pdot
-            self.pmids_for_hgvs = self.pmids_for_hgvs
+            self.qs = getclient(self._cache_path)
             self.variant = self.get_variant_summary
-            self.variants_by_gene = self._variants_by_gene
-            self.annotate_variants = self._annotate_variants
         else:
             raise NotImplementedError('coming soon: fetch from local clinvar via medgen-mysql.')
 
@@ -132,7 +123,6 @@ class ClinVarFetcher(Borg):
                 if variants[i]["chrom"] != variants[j]["chrom"]:
                     continue
 
-                print("DIFF", abs(variants[i]["pos"] - variants[j]["pos"]))
                 if abs(variants[i]["pos"] - variants[j]["pos"]) <= distance:
                     clusters.append((variants[i], variants[j]))
 
@@ -298,7 +288,7 @@ class ClinVarFetcher(Borg):
             # empty XML document == invalid variant ID
             raise MetaPubError('Invalid ClinVar Variation ID')
 
-    def _variants_by_gene(self, gene, single_gene=True, max_results=100):
+    def variants_by_gene(self, gene, single_gene=True, max_results=100):
         """
         Searches ClinVar for specified gene (ex. CFTR, in HUGO naming convention),
         and searches for each variant's information
@@ -319,7 +309,7 @@ class ClinVarFetcher(Borg):
 
         return results
 
-    def _annotate_variants(self, hgvs_list):
+    def annotate_variants(self, hgvs_list):
         """
         Annotate a list of HGVS c. variants with ClinVar summaries.
         

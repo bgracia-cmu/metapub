@@ -208,6 +208,10 @@ Note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Provides&nbsp;access&nbsp;to&nbsp;NCBI's&nbsp;ClinVar&nbsp;database&nbsp;for&nbsp;clinical&nbsp;significance<br>
 &nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;genetic&nbsp;variants,&nbsp;gene-disease&nbsp;relationships,&nbsp;and&nbsp;variant&nbsp;literature.</span></dd></dl>
 
+<dl><dt><a name="ClinVarFetcher-annotate_variants"><strong>annotate_variants</strong></a>(self, hgvs_list)</dt><dd><span class="code">Annotate&nbsp;a&nbsp;list&nbsp;of&nbsp;HGVS&nbsp;c.&nbsp;variants&nbsp;with&nbsp;ClinVar&nbsp;summaries.<br>
+&nbsp;<br>
+:param:&nbsp;hgvs_list</span></dd></dl>
+
 <dl><dt><a name="ClinVarFetcher-find_nearby_variants"><strong>find_nearby_variants</strong></a>(self, gene, distance=1000)</dt><dd><span class="code">Find&nbsp;variants&nbsp;within&nbsp;a&nbsp;given&nbsp;genomic&nbsp;distance&nbsp;(in&nbsp;base&nbsp;pairs)&nbsp;of&nbsp;each&nbsp;other&nbsp;<br>
 within&nbsp;a&nbsp;gene.</span></dd></dl>
 
@@ -255,6 +259,13 @@ within&nbsp;a&nbsp;gene.</span></dd></dl>
 :param:&nbsp;c_dot&nbsp;c-dot&nbsp;notation<br>
 :param:&nbsp;p_dot&nbsp;p-dot&nbsp;notation<br>
 :param:&nbsp;clinsig&nbsp;additionally&nbsp;filter&nbsp;by&nbsp;clinical&nbsp;significance</span></dd></dl>
+
+<dl><dt><a name="ClinVarFetcher-variants_by_gene"><strong>variants_by_gene</strong></a>(self, gene, single_gene=True, max_results=100)</dt><dd><span class="code">Searches&nbsp;ClinVar&nbsp;for&nbsp;specified&nbsp;gene&nbsp;(ex.&nbsp;CFTR,&nbsp;in&nbsp;HUGO&nbsp;naming&nbsp;convention),<br>
+and&nbsp;searches&nbsp;for&nbsp;each&nbsp;variant's&nbsp;information<br>
+&nbsp;<br>
+:param:&nbsp;gene&nbsp;(string)&nbsp;-&nbsp;gene&nbsp;name&nbsp;in&nbsp;HUGO&nbsp;naming&nbsp;convention.<br>
+:param:&nbsp;single_gene&nbsp;(bool)&nbsp;[default:&nbsp;False]&nbsp;-&nbsp;restrict&nbsp;results&nbsp;to&nbsp;single-gene&nbsp;accessions.<br>
+:return:&nbsp;generator&nbsp;of&nbsp;each&nbsp;variant's&nbsp;information</span></dd></dl>
 
 <hr>
 Data descriptors inherited from <a href="metapub.base.html#Borg">metapub.base.Borg</a>:<br>
