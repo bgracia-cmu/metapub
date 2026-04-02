@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import Optional, Literal
+from typing import Optional, Literal, NotRequired, TypedDict
 from dataclasses import dataclass
 
 from lxml import etree
@@ -37,6 +37,32 @@ class PathogenicSummary:
     consensus: Optional[ClinSig]
     conflicting: bool
     review_status: Optional[str]
+
+
+# BG: Example:
+# <XRefList>
+#   <XRef ID="CA390882941" DB="ClinGen"/>
+#   <XRef Type="rs" ID="1555371642" DB="dbSNP"/>
+# </XRefList>
+class XRef(TypedDict):
+    ID: str
+    # BG: These are documented at: https://www.ncbi.nlm.nih.gov/clinvar/docs/identifiers/
+    DB: Literal[
+        'ClinGen', 
+        'dbSNP',
+        'BookShelf',
+        'dbVar',
+        'Gene',
+        'MedGen',
+        'PubMed',
+        'PubMedCentral',
+        'OMIM',
+        'Orphanet',
+        'MedGen'
+    ]
+    Type: NotRequired[
+        Literal["rs"]
+    ]
 
 class ClinVarVariant(MetaPubObject):
 
@@ -96,7 +122,6 @@ class ClinVarVariant(MetaPubObject):
         self.xrefs = self._get_xref_list()
         self.molecular_consequences = self._get_molecular_consequence_list()
         self.allele_frequencies = self._get_allele_frequency_list()
-
         # Clinical significance and classifications (new in VCV format)
         self.clinical_significance = self._get_clinical_significance()
         self.review_status = self._get_review_status()
@@ -371,8 +396,8 @@ class ClinVarVariant(MetaPubObject):
 
         return hgvs
 
-    def _get_xref_list(self):
-        xrefs = []
+    def _get_xref_list(self) -> list[XRef]:
+        xrefs: list[XRef] = []
 
         if self._is_vcv_format:
             simple_allele = self.variation_archive.find('ClassifiedRecord/SimpleAllele')
@@ -430,6 +455,131 @@ class ClinVarVariant(MetaPubObject):
                 return []
 
         return freqs
+    
+    @property
+    def rsid(self) -> Optional[str]:
+        """ returns first dbSNP rsID for this variant.
+
+        :return: rsID string (e.g. 'rs28934872') or None if no dbSNP xref is present
+        """
+        rsids = self._get_rsids()
+        return rsids[0] if rsids else None
+
+    @property
+    def rsids(self) -> list[str]:
+        """ returns all dbSNP rsIDs for this variant.
+
+        :return: list of rsID strings (e.g. ['rs28934872'])
+        """
+        return self._get_rsids()
+
+    def _get_rsids(self) -> list[str]:
+        """ returns all dbSNP xref IDs normalized to rsID format.
+
+        :return: list of rsID strings prefixed with 'rs'
+        """
+        ids = self._get_dbsnp_ids()
+
+        # BG: Ensure all rsids are formatted as "rs<number>"
+        for i, rsid in enumerate(ids):
+            if not rsid.startswith("rs"):
+                new_rsid = f"rs{rsid}"
+                ids[i] = new_rsid
+        
+        return ids
+    
+    @property
+    def dbsnp_id(self) -> Optional[str]:
+        """ returns first raw dbSNP ID for this variant.
+
+        :return: dbSNP identifier string (e.g. '28934872') or None if no dbSNP xref is present
+        """
+        ids = self._get_dbsnp_ids()
+        return ids[0] if ids else None
+    
+    @property
+    def dbsnp_ids(self) -> list[str]:
+        """ returns all raw dbSNP IDs for this variant.
+
+        :return: list of dbSNP identifier strings
+        """
+        return self._get_dbsnp_ids()
+    
+    def _get_dbsnp_ids(self) -> list[str]:
+        """ returns dbSNP xref IDs from allele-level xrefs.
+
+        :return: list of dbSNP identifier strings
+        """
+        return self._get_xref_ids('dbSNP')
+
+    @property
+    def omim_id(self) -> Optional[str]:
+        """ returns first OMIM ID for this variant.
+
+        :return: OMIM identifier string or None if no OMIM xref is present
+        """
+        omim_ids = self._get_xref_ids('OMIM')
+        return omim_ids[0] if omim_ids else None
+
+    @property
+    def omim_ids(self) -> list[str]:
+        """ returns all OMIM IDs for this variant.
+
+        :return: list of OMIM identifier strings
+        """
+        return self._get_xref_ids('OMIM')
+
+    @property
+    def orphanet_id(self) -> Optional[str]:
+        """ returns first Orphanet ID for this variant.
+
+        :return: Orphanet identifier string or None if no Orphanet xref is present
+        """
+        orphanet_ids = self._get_xref_ids('Orphanet')
+        return orphanet_ids[0] if orphanet_ids else None
+
+    @property
+    def orphanet_ids(self) -> list[str]:
+        """ returns all Orphanet IDs for this variant.
+
+        :return: list of Orphanet identifier strings
+        """
+        return self._get_xref_ids('Orphanet')
+
+    @property
+    def medgen_id(self) -> Optional[str]:
+        """ returns first MedGen ID for this variant.
+
+        :return: MedGen identifier string or None if no MedGen xref is present
+        """
+        medgen_ids = self._get_xref_ids('MedGen')
+        return medgen_ids[0] if medgen_ids else None
+
+    @property
+    def medgen_ids(self) -> list[str]:
+        """ returns all MedGen IDs for this variant.
+
+        :return: list of MedGen identifier strings
+        """
+        return self._get_xref_ids('MedGen')
+
+    def _get_xref_ids(self, db_name: str) -> list[str]:
+        """ returns allele-level xref IDs for the specified database name.
+
+        :param: db_name (string) - database name from the XRef DB field
+        :return: list of xref identifier strings whose DB matches db_name
+        """
+        ids: list[str] = []
+
+        # TODO: BG: Support both/additional xreflist routes (is XRefList structure the same)?
+        # simple_allele = self.variation_archive.find('ClassifiedRecord/SimpleAllele/XRefList')
+        # xref_list = self.content.find('Allele/XRefList')
+        
+        for xref in self.xrefs:
+            if xref['DB'] == db_name:
+                ids.append(xref['ID'])
+
+        return ids
 
     ### NEW VCV FORMAT ENHANCEMENTS ###
 
@@ -812,5 +962,3 @@ class ClinVarVariant(MetaPubObject):
         return assertions
 
     ### OBSERVATIONS
-
-

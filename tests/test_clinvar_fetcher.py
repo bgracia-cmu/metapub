@@ -289,6 +289,16 @@ class TestClinVarFetcher(unittest.TestCase):
         self.assertIsInstance(var.associated_conditions, list)
         self.assertIsInstance(var.gene_dosage_info, list)
         self.assertIsInstance(var.pathogenic_summary, PathogenicSummary)
+        self.assertEqual(var.rsid, 'rs28934872')
+        self.assertEqual(var.rsids, ['rs28934872'])
+        self.assertEqual(var.omim_id, '191092.0006')
+        self.assertEqual(var.omim_ids, ['191092.0006'])
+
+        # TODO: BG: Test orphanet id and medgen with Allele/XRefList XML paths
+        self.assertIsNone(var.orphanet_id)
+        self.assertEqual(var.orphanet_ids, [])
+        self.assertIsNone(var.medgen_id)
+        self.assertEqual(var.medgen_ids, [])
         
         # Verify TSC2 gene dosage info is present
         self.assertTrue(len(var.gene_dosage_info) > 0)
