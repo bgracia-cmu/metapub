@@ -124,6 +124,10 @@ class ClinVarVariant(MetaPubObject):
         # Clinical assertions (new in VCV format)
         self.clinical_assertions = self._get_clinical_assertions()
 
+        # Mode of inheritance terms (new in VCV format)
+        self.modes_of_inheritance = self._get_modes_of_inheritance()
+        self.mode_of_inheritance = self._get_mode_of_inheritance()
+
         # Enhanced citations (new in VCV format)
         self.citations = self._get_citations()
 
@@ -805,6 +809,28 @@ class ClinVarVariant(MetaPubObject):
 
         return assertions
 
+    def _get_modes_of_inheritance(self):
+        """Get all ModeOfInheritance attributes from VCV efetch XML as a list."""
+        if not self._is_vcv_format:
+            return []
+
+        values = []
+        for modes in self.variation_archive.findall('.//Attribute[@Type="ModeOfInheritance"]'):
+            value = (modes.text or '').strip()
+            if value and value not in values:
+                values.append(value)
+
+        return values
+
+    def _get_mode_of_inheritance(self):
+        """Return a single inheritance mode if unique, otherwise return the full list."""
+        modes = getattr(self, 'modes_of_inheritance', None)
+        if modes is None:
+            modes = self._get_modes_of_inheritance()
+
+        if len(modes) == 1:
+            return modes[0]
+        return modes
     ### OBSERVATIONS
 
 
