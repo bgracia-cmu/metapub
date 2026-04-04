@@ -71,18 +71,11 @@ class ClinVarFetcher(Borg):
 
         if method=='eutils':
             self._cache_path = get_cache_path(cachedir, self._cache_filename)
-            self.qs = get_eutils_client(self._cache_path) 
-            self.ids_by_gene = self._eutils_ids_by_gene
-            self.get_accession = self._eutils_get_accession
-            self.pmids_for_id = self._eutils_pmids_for_id
-            self.ids_for_variant = self._eutils_ids_for_variant
-            self.pmids_for_hgvs = self._eutils_pmids_for_hgvs
-            self.variant = self._eutils_get_variant_summary
-            self.ids_by_disease = self._eutils_ids_by_disease
+            self.qs = get_eutils_client(self._cache_path)
         else:
             raise NotImplementedError('coming soon: fetch from local clinvar via medgen-mysql.')
 
-    def _eutils_get_accession(self, accession_id):
+    def get_accession(self, accession_id):
         """ returns python dict of info for given ClinVar accession ID.
 
         :param: accession_id (integer or string)
@@ -104,11 +97,11 @@ class ClinVarFetcher(Borg):
             else:
                 raise
 
-    def _eutils_get_variant_summary(self, accession_id, id_from: IdLocations = 'entrez'):
-        """ returns structured, flattened summary for a ClinVar variant given an accession ID.
+    def variant(self, accession_id, id_from: IdLocations = 'entrez') -> ClinVarVariant:
+        """ returns ClinVarVariant for a ClinVar variant given an accession ID.
         NOTE: By default, this is the Entrez UID that a variant has in E-utilities, NOT its ClinVar ID.
 
-        To specify that you would like this accession_id to be parsed as a clinvar ID, specify 
+        To specify that you would like this accession_id to be parsed as a ClinVar ID, specify 
         `id_from = 'clinvar'`
 
         :param: accession_id (integer or string)
@@ -127,7 +120,7 @@ class ClinVarFetcher(Borg):
             print(error)
             raise MetaPubError('Invalid ClinVar Variation ID')
 
-    def _eutils_ids_by_gene(self, gene, single_gene=False):
+    def ids_by_gene(self, gene, single_gene=False):
         """
         searches ClinVar for specified gene (HUGO); returns up to 500 matching results.
 
@@ -153,11 +146,11 @@ class ClinVarFetcher(Borg):
             ids.append(item.text.strip())
         return ids
     
-    def _eutils_ids_by_disease(self, disease, use_medgen=False):
+    def ids_by_disease(self, disease, use_medgen=False):
         """
         searches ClinVar for specified disease/condition; returns up to 500 matching results.
 
-        Mirrors the exact pattern of _eutils_ids_by_gene().
+        Mirrors the exact pattern of ids_by_gene().
         
         :param disease (string): disease name (e.g. 'breast cancer')
                                     OR MedGen UID (e.g 'C0027627') when use_medgen=True
@@ -189,7 +182,7 @@ class ClinVarFetcher(Borg):
         
         return ids
 
-    def _eutils_pmids_for_id(self, clinvar_id):
+    def pmids_for_id(self, clinvar_id):
         """
         example:
         https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=clinvar&db=pubmed&id=9
@@ -200,7 +193,7 @@ class ClinVarFetcher(Borg):
         xmlstr = self.qs.elink({'dbfrom': 'clinvar', 'id': clinvar_id, 'db': 'pubmed'})
         return parse_elink_response(xmlstr)
 
-    def _eutils_ids_for_variant(self, hgvs_c):
+    def ids_for_variant(self, hgvs_c):
         """ returns ClinVar IDs for given HGVS c. string
 
         :param: hgvs_c (string)
@@ -216,16 +209,16 @@ class ClinVarFetcher(Borg):
             ids.append(item.text.strip())
         return ids
 
-    def _eutils_pmids_for_hgvs(self, hgvs_text):
+    def pmids_for_hgvs(self, hgvs_text):
         """ returns pubmed IDs for given HGVS c. string
 
         :param hgvs_text:
         :return: list of pubmed IDs
         """
-        ids = self._eutils_ids_for_variant(hgvs_text)
+        ids = self.ids_for_variant(hgvs_text)
         if len(ids) > 1:
             print('Warning: more than one ClinVar id returned for term %s' % hgvs_text)
         pmids = set()
         for clinvar_id in ids:
-            pmids.update(self._eutils_pmids_for_id(clinvar_id))
+            pmids.update(self.pmids_for_id(clinvar_id))
         return list(pmids)

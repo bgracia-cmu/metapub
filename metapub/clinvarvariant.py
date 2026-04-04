@@ -29,13 +29,225 @@ IdLocations = Literal['clinvar', 'entrez']
 
 @dataclass
 class PathogenicSummary:
+    """Represents a summary of classifications of a variant's pathogenicity."""
+    
     counts: dict[ClinSig, int]
+    """Each clinical significance tag and how many times the variant was tagged by submitters as that.
+
+    Example: { "pathogenic": 4 } -> this variant was tagged as pathogenic by 4 submitters"""
     total_submitters: int
+    """Number of submitters contributing to pathogenicity."""
     consensus: Optional[ClinSig]
+    """Consensus significance; this is the significance the most submitters have agreed on."""
     conflicting: bool
+    """Whether submitted classifications conflict."""
     review_status: Optional[str]
+    """ClinVar's reported overall classification on the pathogenicity."""
 
 class ClinVarVariant(MetaPubObject):
+    """
+    Represents a ClinVar variant with structured access to clinical and metadata fields.
+
+    Attributes:
+        variation_id (int): variant id from ClinVar. Access via https://www.ncbi.nlm.nih.gov/clinvar/variation/VARIANT
+        variation_name (str): variant name, ex. "NM_000548.4(TSC2):c.1832G>A (p.Arg611Gln)". First row of the "Identifier" column on the web browser.
+        variation_type (str): type of variant, ex. "single nucleotide variant"
+        date_created (str): date the variant was first submitted into ClinVar.
+        date_last_updated (str): date of the most recent submission into ClinVar.
+        submitter_count (int): number of submitters
+        species (str): species this variant is associated with, ex. "Homo sapiens"
+        taxonomy_id (int): taxonomy ID, ex. 2589080. For more info see https://www.ncbi.nlm.nih.gov/Taxonomy/Browser.
+        genes (list[str]): genes this variant is a part of. ex. ["TSC2", "IFN2"]
+        cytogenic_location (str): the location of a gene on a chromosome. See https://medlineplus.gov/genetics/understanding/howgeneswork/genelocation for more info.
+        sequence_locations (list[dict]):
+            Genomic locations of the variant across different genome assemblies.
+
+            Each entry may include:
+                - assembly (str): Genome build (e.g., "GRCh37", "GRCh38")
+                - chromosome (str): Chromosome identifier
+                - start (int): Start position of the variant
+                - stop (int): End position of the variant
+                - reference_allele (str): Reference allele
+                - alternate_allele (str): Alternate allele
+
+            Multiple entries may exist if the variant is mapped to multiple assemblies
+            or genomic contexts.
+
+        hgvs (list[str]):
+            List of HGVS (Human Genome Variation Society) expressions describing the variant.
+
+            Includes representations at different levels:
+                - genomic (g.)
+                - coding DNA (c.)
+                - protein (p.)
+
+            Example:
+                - "NC_000017.11:g.43045700A>T"
+                - "NM_007294.4:c.68_69del"
+                - "NP_009225.1:p.Glu23Valfs"
+
+            These strings are essential for cross-database compatibility but may vary
+            depending on transcript and reference sequence.
+
+        xrefs (list[dict]):
+            Cross-references to external databases.
+
+            Each entry may include:
+                - db (str): Database name (e.g., "dbSNP", "OMIM")
+                - id (str): Identifier in the external database
+
+            Example:
+                - dbSNP rsID
+                - OMIM disease or gene identifiers
+
+        molecular_consequences (list[str]):
+            High-level molecular consequences of the variant, typically represented
+            using Sequence Ontology terms.
+
+            Examples:
+                - "missense_variant"
+                - "frameshift_variant"
+                - "synonymous_variant"
+
+            These describe the predicted effect of the variant on gene products.
+
+        allele_frequencies (list[dict]):
+            Population allele frequency data for the variant, if available.
+
+            Each entry may include:
+                - source (str): Data source (e.g., "gnomAD", "1000 Genomes")
+                - allele_frequency (float): Observed frequency of the alternate allele
+                - population (str): Population group (if specified)
+
+            Note:
+                ClinVar does not always include frequency data; this field may be empty.
+
+        clinical_significance (str):
+            The overall clinical significance classification assigned to the variant.
+
+            Common values include:
+                - "pathogenic"
+                - "likely pathogenic"
+                - "uncertain significance"
+                - "likely benign"
+                - "benign"
+                - "conflicting interpretations"
+
+            This represents a summary across submissions, not individual submitter opinions.
+
+        review_status (str):
+            The level of review and consensus supporting the clinical significance.
+
+            Examples:
+                - "criteria provided, single submitter"
+                - "criteria provided, multiple submitters, no conflicts"
+                - "reviewed by expert panel"
+                - "practice guideline"
+
+        date_last_evaluated (str):
+            The most recent date this variant's clinical significance was evaluated
+            by any submitting laboratory.
+
+        number_of_submissions (int):
+            Total number of submissions (SCVs) made to ClinVar for this variant.
+
+        number_of_submitters (int):
+            Number of unique submitters (labs/groups) contributing classifications.
+
+        pathogenic_summary (PathogenicSummary):
+            Aggregated clinical significance across all submitters.
+        
+        vcv_accession (str):
+            The ClinVar Variation accession identifier (e.g., "VCV000012345").
+            This is the stable, versioned identifier for a variant record in ClinVar.
+
+        record_type (str):
+            The type of ClinVar record (e.g., "classified", "reference").
+            Typically indicates whether the variant has clinical assertions.
+
+        most_recent_submission (str):
+            The date of the most recent submission to ClinVar for this variant.
+            Useful for tracking how recently the variant has been evaluated.
+
+        associated_conditions (list[dict]):
+            List of conditions or diseases associated with this variant.
+
+            Each entry may include:
+                - name (str): Condition name
+                - medgen_id (str): MedGen identifier
+                - database (str): Source database
+                - rcv_accession (str): ClinVar reference condition accession
+
+        molecular_consequences_detailed (list[dict]):
+            Detailed functional consequences of the variant at the molecular level.
+
+            Each entry may include:
+                - consequence (str): Sequence Ontology term (e.g., "missense_variant")
+                - impact (str): Predicted functional impact (if available)
+                - gene (str): Affected gene symbol
+
+            Provides more granular information than high-level consequence summaries.
+
+        sequence_details (dict):
+            Genomic and transcript-level sequence context for the variant.
+
+            May include:
+                - genomic coordinates (chromosome, position)
+                - reference and alternate alleles
+                - transcript mappings
+                - assembly version (e.g., GRCh37, GRCh38)
+
+        gene_dosage_info (dict | None):
+            Information about gene dosage sensitivity (e.g., haploinsufficiency or triplosensitivity),
+            if available.
+
+            Typically derived from external resources such as ClinGen.
+            May be None if no dosage data is available.
+
+        protein_change (str | None):
+            Protein-level HGVS representation (p. notation), e.g. "p.Arg175His".
+
+            Represents the amino acid change caused by the variant.
+            May be None if not applicable (e.g., non-coding variants).
+
+        clinical_assertions (list[dict]):
+            Raw list of individual submitter assertions for this variant.
+
+            Each assertion may include:
+                - submitter name
+                - clinical significance classification
+                - review status
+                - date evaluated
+                - evidence details (if available)
+
+            This is the underlying data used to compute aggregated summaries such as
+            `pathogenic_summary`.
+
+        modes_of_inheritance (list[str]):
+            List of reported modes of inheritance associated with this variant.
+
+            Examples:
+                - "autosomal dominant"
+                - "autosomal recessive"
+                - "x-linked"
+
+            Derived from submitted clinical assertions.
+
+        mode_of_inheritance (str | None):
+            A simplified or primary mode of inheritance inferred from available data.
+
+            Typically represents the most common or consensus inheritance mode.
+            May be None if insufficient data is available.
+
+        citations (list[int]):
+            List of PubMed IDs (PMIDs) associated with this variant.
+
+            Represents publications that:
+                - describe the variant
+                - provide evidence for its clinical significance
+
+            Can be used to retrieve full articles via PubMed.
+    """
 
     def __init__(self, xmlstr, *args, **kwargs):
         # Try new VCV format first, fall back to old format for backwards compatibility
@@ -100,6 +312,7 @@ class ClinVarVariant(MetaPubObject):
         self.date_last_evaluated = self._get_date_last_evaluated()
         self.number_of_submissions = self._get_number_of_submissions()
         self.number_of_submitters = self._get_number_of_submitters()
+        self.pathogenic_summary = self._get_pathogenic_summary()
 
         # VCV record metadata (new in VCV format)
         self.vcv_accession = self._get_vcv_accession()
@@ -196,10 +409,6 @@ class ClinVarVariant(MetaPubObject):
                 except KeyError:
                     pass
         return strlist
-
-    @property
-    def pathogenic_summary(self) -> Optional[PathogenicSummary]:
-        return self._get_pathogenic_summary()
 
     ### VariationReport basic info
 
@@ -596,23 +805,6 @@ class ClinVarVariant(MetaPubObject):
         return details
     
     def _get_pathogenic_summary(self) -> Optional[PathogenicSummary]:
-        """ Return the aggregation of per-submitter clinical germline significance classifications 
-        into a readable summary.
-
-        Returns a dataclass in the following format:
-        {
-          counts: {
-            'pathogenic': 3,
-            'likely pathogenic': 1,
-            'uncertain significance': 0,
-          }
-          ...
-          total_submitters: 4,
-          consensus: 'pathogenic',
-          conflicting': False,
-          review_status: 'criteria provided, multiple submitters, no conflicts'
-        }
-        """
         if not self._is_vcv_format:
             return None
         
