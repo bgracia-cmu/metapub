@@ -1,4 +1,4 @@
-Source:   Synthetic — hand-authored (no real NCBI record of this format is served)
+Source:   Synthetic — hand-authored (old format no longer served by NCBI API)
 Date:     2026-04-18
 Variant:  VariationID=12397 — NM_000548.4(TSC2):c.1832G>A (p.Arg611Gln)
           (same variant as clinvar_vcv_12000.xml, different format)
@@ -6,13 +6,30 @@ Type:     Old pre-VCV VariationReport format (root tag: VariationReport, allele 
 Purpose:  Tests the _is_vcv_format=False branch of _get_xref_list, which uses
           the .//Allele/XRefList XPath instead of .//SimpleAllele/XRefList.
 
-Why synthetic:
-  NCBI no longer serves the VariationReport XML format via efetch. Requests for
-  VCV records now always return ClinVarResult-Set (VCV format). The old format
-  is handled for backwards compatibility with cached/archived XML. The fixture
-  was constructed from the format documented in the clinvarvariant.py source
-  (see _is_vcv_format branching at __init__) and cross-referenced against the
-  XRef values known from the real VCV record (rs28934872, OMIM 191092.0006).
+Investigation to confirm no real record can be fetched
+-------------------------------------------------------
+
+Step 1 — tried rettype=xml:
+  curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=clinvar&id=12397&rettype=xml"
+  Result: HTML error page ("Error occurred: cannot get document summary")
+
+Step 2 — tried rettype=variation:
+  curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=clinvar&id=12397&rettype=variation"
+  Result: explicit deprecation notice —
+    "Variation objects (blobs) are no longer supported. They were replaced by the
+     VCV XML, which you can retrieve using rettype=vcv. See our web release notes
+     from April 2019 (https://ftp.ncbi.nlm.nih.gov/pub/clinvar/release_notes/
+     web_2.0_alpha/20190404WebRelease.pdf) and our documentation on E-utilities
+     for ClinVar (https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/#api)"
+
+Step 3 — tried no rettype:
+  curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=clinvar&id=12397"
+  Result: bare <IdList><Id>12397</Id></IdList> — no XML record body
+
+Conclusion: The old VariationReport format was retired by NCBI in April 2019. No
+combination of rettype values produces it today. The fixture is synthetic but
+structurally correct, cross-referenced against the known XRef values from the live
+VCV record VCV000012397: rs28934872 (dbSNP) and 191092.0006 (OMIM).
 
 Structure:
   VariationReport (root — _is_vcv_format=False path)
