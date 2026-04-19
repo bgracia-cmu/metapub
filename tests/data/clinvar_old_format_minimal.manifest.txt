@@ -1,0 +1,22 @@
+Source:   Synthetic — hand-authored (no real NCBI record of this format is served)
+Date:     2026-04-18
+Variant:  VariationID=12397 — NM_000548.4(TSC2):c.1832G>A (p.Arg611Gln)
+          (same variant as clinvar_vcv_12000.xml, different format)
+Type:     Old pre-VCV VariationReport format (root tag: VariationReport, allele tag: Allele)
+Purpose:  Tests the _is_vcv_format=False branch of _get_xref_list, which uses
+          the .//Allele/XRefList XPath instead of .//SimpleAllele/XRefList.
+
+Why synthetic:
+  NCBI no longer serves the VariationReport XML format via efetch. Requests for
+  VCV records now always return ClinVarResult-Set (VCV format). The old format
+  is handled for backwards compatibility with cached/archived XML. The fixture
+  was constructed from the format documented in the clinvarvariant.py source
+  (see _is_vcv_format branching at __init__) and cross-referenced against the
+  XRef values known from the real VCV record (rs28934872, OMIM 191092.0006).
+
+Structure:
+  VariationReport (root — _is_vcv_format=False path)
+  └── Allele (AlleleID=27436)
+      └── XRefList
+          ├── XRef Type="rs" ID="28934872" DB="dbSNP"
+          └── XRef Type="Allelic variant" ID="191092.0006" DB="OMIM"

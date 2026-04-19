@@ -1,0 +1,21 @@
+Source:   Synthetic — hand-authored (no real NCBI record)
+Date:     2026-04-18
+Variant:  VCV000999001 (fictional) — NM_000001.1(GENE1):c.[100A>G];[200C>T]
+Type:     Genotype (two SimpleAllele elements under ClassifiedRecord/Genotype)
+Purpose:  Tests that _get_xref_list collects XRefs from SimpleAlleles nested under
+          a Genotype element (same .//SimpleAllele/XRefList XPath as Haplotype).
+
+Why synthetic:
+  esearch for "Genotype[VariationType]" consistently returned simple SNV records
+  whose XML used VariationType="single nucleotide variant". True Genotype-typed
+  VCV records appear to be rare or not reachable via esearch field indexing.
+  The synthetic fixture exercises the XPath code path with a minimal,
+  structurally correct document.
+
+Structure:
+  ClinVarResult-Set
+  └── VariationArchive (VariationType="Genotype")
+      └── ClassifiedRecord
+          └── Genotype
+              ├── SimpleAllele (AlleleID=111001) — XRefList: dbSNP + OMIM
+              └── SimpleAllele (AlleleID=111002) — XRefList: dbSNP only
