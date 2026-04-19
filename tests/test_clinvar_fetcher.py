@@ -353,6 +353,20 @@ class TestClinVarFetcher(unittest.TestCase):
         omim_ids = [x['ID'] for x in xrefs if x.get('DB') == 'OMIM']
         self.assertIn('100001.0001', omim_ids)
 
+    def test_rsid_normalization_and_dedup(self):
+        """All four observed dbSNP XRef formats for the same rsID collapse to one bare number.
+
+        The four formats documented in _get_rsids comments:
+          Type="rs"       ID="1799945"   -- idiomatic
+          Type="rsNumber" ID="1799945"   -- non-standard Type (Type-agnostic collection)
+          (no Type)       ID="rs1799945" -- rs prefix joined into ID field
+          (no Type)       ID="1799945"   -- bare number, missing Type entirely
+        All represent the same variant and must deduplicate to ['1799945'].
+        """
+        var = self._load_fixture('clinvar_vcv_rsid_formats.xml')
+        self.assertEqual(var.rsids, ['1799945'])
+        self.assertEqual(var.rsid, '1799945')
+
     def test_xref_list_old_format(self):
         """Old VariationReport format (TSC2 c.1832G>A, pre-VCV) uses Allele/XRefList path."""
         var = self._load_fixture('clinvar_old_format_minimal.xml')

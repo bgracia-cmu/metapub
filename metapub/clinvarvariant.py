@@ -500,11 +500,12 @@ class ClinVarVariant(MetaPubObject):
 
         for i, rsid in enumerate(ids):
             if rsid.startswith(rs_prefix):
-                rsid_number = rsid.removeprefix(rs_prefix)
-                new_rsid = f"{rsid_number}"
-                ids[i] = new_rsid
-        
-        return ids
+                ids[i] = rsid.removeprefix(rs_prefix)
+
+        # BG: Deduplicate with first-seen order preserved
+        ids_deduped = list(dict.fromkeys(ids))
+
+        return ids_deduped
     
     @property
     def dbsnp_id(self) -> Optional[str]:
