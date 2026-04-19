@@ -294,7 +294,8 @@ class TestClinVarFetcher(unittest.TestCase):
         self.assertEqual(var.omim_id, '191092.0006')
         self.assertEqual(var.omim_ids, ['191092.0006'])
 
-        # TODO: BG: Test orphanet id and medgen with Allele/XRefList XML paths
+        # Orphanet/MedGen xrefs never appear in SimpleAllele/XRefList in real records
+        # (they live in condition/RCV sections); see clinvar_vcv_orphanet_medgen.manifest.txt
         self.assertIsNone(var.orphanet_id)
         self.assertEqual(var.orphanet_ids, [])
         self.assertIsNone(var.medgen_id)
@@ -366,6 +367,19 @@ class TestClinVarFetcher(unittest.TestCase):
         var = self._load_fixture('clinvar_vcv_rsid_formats.xml')
         self.assertEqual(var.rsids, ['1799945'])
         self.assertEqual(var.rsid, '1799945')
+
+    def test_orphanet_and_medgen_ids(self):
+        """Orphanet and MedGen IDs in SimpleAllele/XRefList are returned by orphanet_id/medgen_id.
+
+        Note: no real VCV record has these DBs in SimpleAllele/XRefList (they appear only
+        in condition/RCV sections). This synthetic fixture tests the filtering code path.
+        """
+        var = self._load_fixture('clinvar_vcv_orphanet_medgen.xml')
+        self.assertEqual(var.orphanet_id, 'ORPHA:123456')
+        self.assertEqual(var.orphanet_ids, ['ORPHA:123456', 'ORPHA:789012'])
+        self.assertEqual(var.medgen_id, 'C0123456')
+        self.assertEqual(var.medgen_ids, ['C0123456'])
+        self.assertEqual(var.rsid, '987654321')
 
     def test_xref_list_old_format(self):
         """Old VariationReport format (TSC2 c.1832G>A, pre-VCV) uses Allele/XRefList path."""

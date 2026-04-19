@@ -509,7 +509,7 @@ class ClinVarVariant(MetaPubObject):
     
     @property
     def dbsnp_id(self) -> Optional[str]:
-        """ returns first raw dbSNP ID for this variant.
+        """ returns first dbSNP ID for this variant.
 
         :return: dbSNP identifier string (e.g. '28934872') or None if no dbSNP xref is present
         """
@@ -518,7 +518,7 @@ class ClinVarVariant(MetaPubObject):
     
     @property
     def dbsnp_ids(self) -> list[str]:
-        """ returns all raw dbSNP IDs for this variant.
+        """ returns all dbSNP IDs for this variant.
 
         :return: list of dbSNP identifier strings
         """
