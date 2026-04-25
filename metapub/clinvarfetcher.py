@@ -14,9 +14,9 @@ from .ncbi_errors import diagnose_ncbi_error, NCBIServiceError
 class ClinVarFetcher(Borg):
     """ ClinVarFetcher (a Borg singleton object)
 
-    Toolkit for retrieval of ClinVar information. 
+    Toolkit for retrieval of ClinVar information.
 
-    Set optional 'cachedir' parameter to absolute path of preferred directory 
+    Set optional 'cachedir' parameter to absolute path of preferred directory
     if desired; cachedir defaults to <current user directory> + /.cache
 
         clinvar = ClinVarFetcher()
@@ -26,25 +26,77 @@ class ClinVarFetcher(Borg):
     Usage
     -----
 
-    Get ClinVar accession IDs for gene name (switch single_gene to True to filter out 
-    results containing more genes than the specified gene being searched, default False).
+    Get ClinVar accession IDs for a gene name (set single_gene=True to filter out
+    results containing more than the specified gene, default False):
 
         cv_ids = clinvar.ids_by_gene('FGFR3', single_gene=True)
 
-    Get ClinVar accession in python dictionary format for given ID:
+    Get ClinVar accession IDs for a disease name or MedGen CUI:
 
-        cv_subm = clinvar.accession(65533)  # can also submit ID as string 
+        cv_ids = clinvar.ids_by_disease('breast cancer')
+        cv_ids = clinvar.ids_by_disease('C0027627', source='medgen')
 
-    Get list of pubmed IDs (pmids) for given ClinVar accession ID:
+    Get ClinVar accession in python dictionary format for a given ID:
+
+        cv_subm = clinvar.get_accession(65533)  # can also submit ID as string
+
+    Get a structured ClinVarVariant object for a given Entrez UID or ClinVar variation ID:
+
+        variant = clinvar.variant(65533)
+        variant = clinvar.variant(12397, id_from='clinvar')
+
+    Get list of pubmed IDs (pmids) for a given ClinVar accession ID:
 
         pmids = clinvar.pmids_for_id(65533)  # can also submit ID as string
 
-    Get list of pubmed IDs (pmids) for hgvs string:
+    Get list of pubmed IDs (pmids) for an HGVS string:
 
         pmids = clinvar.pmids_for_hgvs('NM_017547.3:c.1289A>G')
 
+    Get ClinVar IDs matching an HGVS string:
+
+        cv_ids = clinvar.ids_for_variant('NM_017547.3:c.1289A>G')
+
+    Get a DbSnpFreqSummary for a variant by rsID or ClinVarVariant object:
+
+        freq = clinvar.dbsnp_freq_summary_for_variant('rs28934872')
+        freq = clinvar.dbsnp_freq_summary_for_variant(variant)
+
     For more info, see the ClinVar eutils page:
     https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/
+
+    Methods
+    -------
+    ids_by_gene(gene, single_gene=False)
+        Search ClinVar by HUGO gene name. Returns up to 500 matching Entrez IDs.
+
+    ids_by_disease(disease, source='disease')
+        Search ClinVar by disease name or MedGen CUI. Returns up to 500 matching
+        Entrez IDs. Use source='medgen' to search by MedGen CUI (e.g. 'C0027627').
+
+    get_accession(accession_id)
+        Returns a dict of info for a given ClinVar accession ID.
+        Raises NCBIServiceError if the ClinVar service is unavailable.
+
+    variant(accession_id, id_from='entrez')
+        Returns a ClinVarVariant for the given accession ID. By default interprets
+        the ID as an Entrez UID; pass id_from='clinvar' to use a ClinVar variation ID.
+        Raises MetaPubError if the variation ID is invalid.
+
+    pmids_for_id(clinvar_id)
+        Returns a list of PubMed IDs associated with a given ClinVar accession ID.
+
+    pmids_for_hgvs(hgvs_text)
+        Returns a list of PubMed IDs associated with a given HGVS string. Prints
+        a warning if more than one ClinVar ID matches the term.
+
+    ids_for_variant(hgvs_c)
+        Returns a list of ClinVar Entrez IDs matching the given HGVS c. string.
+
+    dbsnp_freq_summary_for_variant(variant_or_rsid)
+        Returns a DbSnpFreqSummary for a variant. Accepts an rsID string ('rs12345'
+        or '12345') or a ClinVarVariant object. Raises MetaPubError if no dbSNP ID
+        can be resolved, and NCBIServiceError if the dbSNP service is unavailable.
     """
 
     _cache_filename = 'clinvarfetcher.db'
