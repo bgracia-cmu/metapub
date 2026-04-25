@@ -78,6 +78,7 @@ class ClinVarFetcher(Borg):
             self.ids_for_variant = self._eutils_ids_for_variant
             self.pmids_for_hgvs = self._eutils_pmids_for_hgvs
             self.variant = self._eutils_get_variant_summary
+            self.ids_by_disease = self._eutils_ids_by_disease
             self.dbsnp_freq_summary_for_variant = self._eutils_dbsnp_freq_summary_for_variant
         else:
             raise NotImplementedError('coming soon: fetch from local clinvar via medgen-mysql.')
@@ -150,6 +151,51 @@ class ClinVarFetcher(Borg):
         idlist = dom.find('IdList')
         for item in idlist.findall('Id'):
             ids.append(item.text.strip())
+        return ids
+    
+    def _eutils_ids_by_disease(self, disease, source="disease"):
+        """
+        searches ClinVar for specified disease/condition; returns up to 500 matching results.
+
+        Mirrors the exact pattern of _eutils_ids_by_gene().
+        
+        :param disease (string): disease name (e.g. 'breast cancer')
+                                    OR MedGen UID (e.g 'C0027627') when use_medgen=True
+        :param source (str) [default: "disease"]: the source/type of the disease term.
+            - "disease"  → standard disease name search (uses the [disease] field)
+            - "medgen"   → MedGen CUI search (uses the "CUI " prefix)
+        
+        """
+        
+        # equivalent esearch URLs (exactly as shown in the Github issue):
+        #   https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=breast+cancer[disease]&retmax=500
+        #   https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=CUI+C0027627&retmax=500
+        SOURCE_MAP = {
+            "disease": lambda d: d.replace(" ", "+") + "[disease]",
+            "medgen": lambda d: f"CUI {d}",
+        }
+
+        if source not in SOURCE_MAP:
+            raise ValueError(
+                f"Unsupported disease source: '{source}'."
+                f"Supported sources: {list(SOURCE_MAP.keys())}"
+            )
+
+        term = SOURCE_MAP[source](disease)
+
+        result = self.qs.esearch({
+            "db": "clinvar",
+            "term": term,
+            "sort": "relevance",  
+            "retmax": 500  
+        })
+        dom = etree.fromstring(result)
+        ids = []
+        idlist = dom.find('IdList')
+        if idlist is not None:
+            for item in idlist.findall('Id'):
+                ids.append(item.text.strip())
+        
         return ids
 
     def _eutils_pmids_for_id(self, clinvar_id):
