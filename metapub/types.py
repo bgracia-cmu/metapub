@@ -89,11 +89,20 @@ MolecularConsequences = Literal[
 
 @dataclass
 class PathogenicSummary:
+    """Represents a summary of classifications of a variant's pathogenicity."""
+    
     counts: dict[ClinSig, int]
+    """Each clinical significance tag and how many times the variant was tagged by submitters as that.
+
+    Example: { "pathogenic": 4 } -> this variant was tagged as pathogenic by 4 submitters"""
     total_submitters: int
+    """Number of submitters contributing to pathogenicity."""
     consensus: Optional[ClinSig]
+    """Consensus significance; this is the significance the most submitters have agreed on."""
     conflicting: bool
+    """Whether submitted classifications conflict."""
     review_status: Optional[str]
+    """ClinVar's reported overall classification on the pathogenicity."""
 
 @dataclass
 class MolecularConsequenceInfo:
