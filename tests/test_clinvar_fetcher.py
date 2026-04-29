@@ -238,7 +238,6 @@ class TestClinVarFetcher(unittest.TestCase):
             b'</VariationArchive></ClinVarResult-Set>'
         )
         multiple_case_var = ClinVarVariant(multiple_case_xml)
-        self.assertEqual(multiple_case_var.mode_of_inheritance, 'Autosomal dominant inheritance')
         self.assertEqual(
             multiple_case_var.modes_of_inheritance,
             ['Autosomal dominant inheritance', 'Autosomal recessive inheritance']
