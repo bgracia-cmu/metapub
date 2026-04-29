@@ -101,7 +101,6 @@ class ClinVarVariant(MetaPubObject):
 
         # Mode of inheritance terms (new in VCV format)
         self.modes_of_inheritance = self._get_modes_of_inheritance()
-        self.mode_of_inheritance = self._get_mode_of_inheritance()
 
         # Enhanced citations (new in VCV format)
         self.citations = self._get_citations()
@@ -729,17 +728,9 @@ class ClinVarVariant(MetaPubObject):
                 values.append(value)
 
         return values
-
-    def _get_mode_of_inheritance(self):
-        """Return the first inheritance mode string if any exist, otherwise return None"""
-        
-        modes = self._get_modes_of_inheritance()
-
-        if modes:
-            return modes[0]
-        else:
-            return None
     
+    
+
     ### OBSERVATIONS
 
 
